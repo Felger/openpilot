@@ -2,10 +2,12 @@
 from cereal import car
 from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.drive_helpers import create_event, EventTypes as ET
+from common.op_params import opParams
 from selfdrive.car.gm.values import CAR, Ecu, ECU_FINGERPRINT, CruiseButtons, \
                                     SUPERCRUISE_CARS, NO_ASCM_CARS, AccState, FINGERPRINTS
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, is_ecu_disconnected, gen_empty_fingerprint
 from selfdrive.car.interfaces import CarInterfaceBase
+from selfdrive.config import Conversions as CV
 
 ButtonType = car.CarState.ButtonEvent.Type
 
@@ -50,7 +52,8 @@ class CarInterface(CarInterfaceBase):
       ret.minEnableSpeed = 18 * CV.MPH_TO_MS
       ret.mass = 1607. + STD_CARGO_KG
       ret.wheelbase = 2.69
-      ret.steerRatio = 15.7
+      ret.steerRatio = 16.38 # live params w/ localizer, stock 15.7
+      tire_stiffness_factor = 0.465 # live params w/ localizer, stock Michelin Energy Saver A/S
       ret.steerRatioRear = 0.
       ret.centerToFront = ret.wheelbase * 0.4 # wild guess
 
@@ -71,6 +74,11 @@ class CarInterface(CarInterfaceBase):
       # outer and inner are gains. Higher values = more steering
       #
       ret.lateralTuning.init('indi')
+      ret.lateralTuning.indi.innerLoopGain = op_params.get('indi_rate_error_gain')
+      ret.lateralTuning.indi.outerLoopGain = op_params.get('indi_error_gain')
+      ret.lateralTuning.indi.timeConstant = op_params.get('indi_time_constant')
+      ret.lateralTuning.indi.actuatorEffectiveness = 2.0
+      ret.steerActuatorDelay = op_params.get('steer_actuator_delay')
       ret.lateralTuning.indi.innerLoopGain = 5.0
       ret.lateralTuning.indi.outerLoopGain = 4.2
       ret.lateralTuning.indi.timeConstant = 1.9
