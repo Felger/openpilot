@@ -61,7 +61,7 @@ class LatControlINDI():
     op_params = opParams()
     self.G_BP = [0.0, 31.0]
     self.G_V = [op_params.get('indi_effect_low'), op_params.get('indi_effect_high')]
-    self.G = interp(CS.vEgo, self.G_BP, self.G_V)
+    self.G = interp(v_ego, self.G_BP, self.G_V)
     self.outer_loop_gain = op_params.get('indi_error_gain')
     self.inner_loop_gain = op_params.get('indi_rate_error_gain')
     self.RC = op_params.get('indi_time_constant')
