@@ -62,6 +62,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 18.0
       ret.steerRatioRear = 0.
       ret.centerToFront = ret.wheelbase * 0.4
+      ret.steerActuatorDelay = 0.144 # Measured based on cabana data, stdev of 0.06
 
       ret.lateralTuning.init('lqr')
       ret.lateralTuning.lqr.scale = 1700.0
