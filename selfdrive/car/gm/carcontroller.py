@@ -151,7 +151,8 @@ class CarController():
         #final_pedal2
         #use combined gas & brake, adjust for apparent pedal_pivot
         #It seems in L mode, accel / decel point is around 1/5
-        final_pedal2 += 0.2
+        
+        #final_pedal2 += 0.2
         pedal_gas = clip(final_pedal2, 0., 1.)
         #pedal_gas = clip(actuators.gas, 0., 1.)
         if (frame % 4) == 0:
