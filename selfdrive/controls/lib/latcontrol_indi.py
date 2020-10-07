@@ -59,8 +59,8 @@ class LatControlINDI():
 
   def update(self, active, v_ego, angle_steers, angle_steers_rate, eps_torque, steer_override, rate_limited, CP, path_plan):
     op_params = opParams()
-    self.G_BP = [0.0, 31.0]
-    self.G_V = [op_params.get('indi_effect_low'), op_params.get('indi_effect_high')]
+    self.G_BP = [11.0, 25, 31.0] # Flattening point is a guess at 55mph
+    self.G_V = [op_params.get('indi_effect_low'), op_params.get('indi_effect_high'), op_params.get('indi_effect_high')] # Flatten the high-speed effectiveness
     self.G = interp(v_ego, self.G_BP, self.G_V)
     self.outer_loop_gain = op_params.get('indi_error_gain')
     self.inner_loop_gain = op_params.get('indi_rate_error_gain')

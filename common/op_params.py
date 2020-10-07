@@ -40,12 +40,11 @@ class opParams:
 
     self.default_params = {'camera_offset': {'default': 0.06, 'clip': [-0.5, 0.5], 'allowed_types': [float], 'live': True},
                            'indi_effect_low': {'default': 16.0, 'clip': [2.0, 25.0], 'allowed_types': [float], 'live': True},
-                           'indi_effect_high': {'default': 1.2, 'clip': [0.5, 10.0], 'allowed_types': [float], 'live': True},
-                           'indi_error_gain': {'default': 7.0, 'clip': [1.0, 20.0], 'allowed_types': [float], 'live': True},
-                           'indi_rate_error_gain': {'default': 4.0, 'clip': [1.0, 20.0], 'allowed_types': [float], 'live': True},
-                           'indi_time_constant': {'default': 8.0, 'clip': [0.0, 40.0], 'allowed_types': [float], 'live': True},
-                           'steer_actuator_delay': {'default': 0.2, 'clip': [0.01, 0.5], 'allowed_types': [float], 'live': True},
-
+                           'indi_effect_high': {'default': 6.79, 'clip': [0.5, 10.0], 'allowed_types': [float], 'live': True},
+                           'indi_error_gain': {'default': 13.1, 'clip': [1.0, 25.0], 'allowed_types': [float], 'live': True},
+                           'indi_rate_error_gain': {'default': 4.57, 'clip': [1.0, 20.0], 'allowed_types': [float], 'live': True},
+                           'indi_time_constant': {'default': 5.5, 'clip': [0.0, 40.0], 'allowed_types': [float], 'live': True},
+                           'steer_actuator_delay': {'default': 0.15, 'clip': [0.01, 0.5], 'allowed_types': [float], 'live': True},
                            'op_edit_live_mode': {'default': False, 'description': 'This parameter controls which mode opEdit starts in. It should be hidden from the user with the hide key', 'hide': True}}
 
     self.params = {}
