@@ -1,6 +1,7 @@
 from cereal import log
 from common.numpy_fast import clip, interp
 from selfdrive.controls.lib.pid import PIController
+from common.op_params import opParams
 
 LongCtrlState = log.ControlsState.LongControlState
 
@@ -76,6 +77,14 @@ class LongControl():
     # Actuation limits
     gas_max = interp(v_ego, CP.gasMaxBP, CP.gasMaxV)
     brake_max = interp(v_ego, CP.brakeMaxBP, CP.brakeMaxV)
+    op_params = opParams()
+
+    # Update tunable parameters:
+    self.pid._k_i = ([op_params.get('ki_low'),
+                      op_params.get('ki_high')])
+    self.pid._k_p = ([op_params.get('kp_low'),
+                      op_params.get('kp_mid'),
+                      op_params.get('kp_high')])
 
     # Update state machine
     output_gb = self.last_output_gb
