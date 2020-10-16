@@ -44,6 +44,11 @@ class opParams:
                            'indi_error_gain': {'default': 13.1, 'clip': [1.0, 25.0], 'allowed_types': [float], 'live': True},
                            'indi_rate_error_gain': {'default': 4.57, 'clip': [1.0, 20.0], 'allowed_types': [float], 'live': True},
                            'indi_time_constant': {'default': 5.5, 'clip': [0.0, 40.0], 'allowed_types': [float], 'live': True},
+                           'kp_low': {'default': 1.2, 'clip': [0.0, 5.0], 'allowed_types': [float], 'live': True},
+                           'kp_mid': {'default': 0.8, 'clip': [0.0, 5.0], 'allowed_types': [float], 'live': True},
+                           'kp_high': {'default': 0.5, 'clip': [0.0, 5.0], 'allowed_types': [float], 'live': True},
+                           'ki_low': {'default': 0.18, 'clip': [0.0, 1.0], 'allowed_types': [float], 'live': True},
+                           'ki_high': {'default': 0.12, 'clip': [0.0, 1.0], 'allowed_types': [float], 'live': True},
                            'steer_actuator_delay': {'default': 0.15, 'clip': [0.01, 0.5], 'allowed_types': [float], 'live': True},
                            'op_edit_live_mode': {'default': False, 'description': 'This parameter controls which mode opEdit starts in. It should be hidden from the user with the hide key', 'hide': True}}
 
