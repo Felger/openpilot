@@ -70,21 +70,6 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatioRear = 0.
       ret.centerToFront = 2.0828 #ret.wheelbase * 0.4 # wild guess
 
-      #-----------------------------------------------------------------------------
-      # INDI
-      #-----------------------------------------------------------------------------
-      # timeconstant is smoothing. Higher values == more smoothing
-      # actuatoreffectiveness is how much it steers. Lower values == more steering
-      # outer and inner are gains. Higher values = more steering
-      #
-      # JJS - removing tuning as it was causing lane crossing
-      #ret.steerActuatorDelay = 0.15
-      #ret.lateralTuning.init('indi')
-      #ret.lateralTuning.indi.innerLoopGain = 4.57 # rate error gain
-      #ret.lateralTuning.indi.outerLoopGain = 13.1 # error gain
-      #ret.lateralTuning.indi.timeConstant = 5.5
-      #ret.lateralTuning.indi.actuatorEffectiveness = 6.79
-
       tire_stiffness_factor = 1.0
 
     elif candidate == CAR.MALIBU:
