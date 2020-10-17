@@ -80,9 +80,11 @@ class LongControl():
     op_params = opParams()
 
     # Update tunable parameters:
-    self.pid._k_i = ([op_params.get('ki_low'),
+    self.pid._k_i = (self.pid._k_i[0],
+                     [op_params.get('ki_low'),
                       op_params.get('ki_high')])
-    self.pid._k_p = ([op_params.get('kp_low'),
+    self.pid._k_p = (self.pid._k_p[0],
+                     [op_params.get('kp_low'),
                       op_params.get('kp_mid'),
                       op_params.get('kp_high')])
 
