@@ -125,6 +125,7 @@ class CarController():
       # no output if not enabled, but keep sending keepalive messages
       # treat pedals as one
       final_pedal = actuators.gas - actuators.brake
+      print(f'actuator request: gas={actuators.gas} brake={actuators.brake}')
 
       # *** apply pedal hysteresis ***
       final_brake, self.brake_steady = actuator_hystereses(
@@ -158,6 +159,7 @@ class CarController():
 
         #JJS - no adjust yet - scaling needs to be -1 <-> +1
         pedal_gas = clip(final_pedal, 0., 1.)
+        print(f'pedal output: {pedal_gas}')
         #This would be more appropriate
         #pedal_gas = clip(actuators.gas, 0., 1.)
         if (frame % 4) == 0:
