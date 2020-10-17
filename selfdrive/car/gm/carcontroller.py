@@ -154,6 +154,7 @@ class CarController():
         new_brake = 0.2 * actuators.brake
         #I am assuming we should not get both a gas and a break value...
         final_pedal2 = new_gas - new_brake
+        print(f'hypothetical request: gas={final_pedal2}')
         #TODO: Hysteresis
         #TODO: Use friction brake via AEB for harder braking
 
