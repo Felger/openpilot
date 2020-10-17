@@ -7,6 +7,8 @@ from selfdrive.car.gm import gmcan
 from selfdrive.car.gm.values import DBC, SUPERCRUISE_CARS, NO_ASCM_CARS, CanBus
 from opendbc.can.packer import CANPacker
 
+from common.op_params import opParams
+
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
 
@@ -90,7 +92,7 @@ class CarController():
 
   def update(self, enabled, CS, frame, actuators, \
              hud_v_cruise, hud_show_lanes, hud_show_car, hud_alert):
-
+    op_params = opParams()
     P = self.params
 
     # Send CAN commands.
@@ -149,20 +151,21 @@ class CarController():
       elif CS.CP.enableGasInterceptor:
         #It seems in L mode, accel / decel point is around 1/5
         #0----decel-------0.2-------accel----------1
-        new_gas = 0.8 * actuators.gas + 0.2
-        new_brake = 0.2 * actuators.brake
+        zero = op_params.get('zero')
+        new_gas = (1-zero) * actuators.gas + zero
+        new_brake = zero * actuators.brake
         #I am assuming we should not get both a gas and a brake value...
-        final_pedal2 = new_gas - new_brake
+        final_pedal = new_gas - new_brake
         if not enabled:
-          final_pedal2 = 0.0
+          final_pedal = 0.0
         #TODO: Hysteresis
         #TODO: Use friction brake via AEB for harder braking
 
         #JJS - no adjust yet - scaling needs to be -1 <-> +1
-        pedal_gas = clip(final_pedal2, 0., 1.)
+        pedal_gas = clip(final_pedal, 0., 1.)
         if enabled:
           print(f'actuator request: gas={actuators.gas} brake={actuators.brake}')
-          print(f'hypothetical request: gas={final_pedal2}')
+          print(f'hypothetical request: gas={final_pedal}')
           print(f'pedal output: {pedal_gas}')
         #This would be more appropriate
         #pedal_gas = clip(actuators.gas, 0., 1.)
