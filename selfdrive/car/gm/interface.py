@@ -10,7 +10,6 @@ from selfdrive.car.interfaces import CarInterfaceBase
 from selfdrive.config import Conversions as CV
 
 ButtonType = car.CarState.ButtonEvent.Type
-
 class CarInterface(CarInterfaceBase):
 
   @staticmethod
@@ -19,6 +18,8 @@ class CarInterface(CarInterfaceBase):
 
   @staticmethod
   def get_params(candidate, fingerprint=gen_empty_fingerprint(), has_relay=False, car_fw=[]):
+    op_params = opParams()
+
     ret = CarInterfaceBase.get_std_params(candidate, fingerprint, has_relay)
     ret.carName = "gm"
     ret.safetyModel = car.CarParams.SafetyModel.gm  # default to gm
@@ -59,7 +60,6 @@ class CarInterface(CarInterfaceBase):
       ret.centerToFront = ret.wheelbase * 0.4 # wild guess
 
     elif candidate == CAR.BOLT:
-      op_params = opParams()
       ret.minEnableSpeed = 25 * CV.MPH_TO_MS
       if ret.enableGasInterceptor:
         ret.minEnableSpeed = 5 * CV.MPH_TO_MS #steering works down to 5mph; pedal to 0
