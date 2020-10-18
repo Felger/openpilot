@@ -153,7 +153,7 @@ class CarController():
         #0----decel-------0.2-------accel----------1
         zero = op_params.get('zero')
         new_gas = (1-zero) * actuators.gas + zero
-        new_brake = zero * actuators.brake
+        new_brake = clip(actuators.brake*(1-zero), 0., zero)
         #I am assuming we should not get both a gas and a brake value...
         final_pedal = new_gas - new_brake
         if not enabled:
