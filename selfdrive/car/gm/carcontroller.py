@@ -150,23 +150,25 @@ class CarController():
           can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, apply_gas, idx, enabled, at_full_stop))
       elif CS.CP.enableGasInterceptor:
         #It seems in L mode, accel / decel point is around 1/5
-        #0----decel-------0.2-------accel----------1
-        zero = op_params.get('zero')
+        #-1-------AEB------0----regen---0.2-------accel----------+1
+        # Shrink gas request to 0.8, have it start at 0.2
+        # Expand brake request to 1.2, first 0.2 gives regen, next 1.0 gives AEB
+        #  (if implemented, may or may not need adjustment if not implemented). 
+        zero = op_params.get('zero') #0.2 works exceedingly well, may not need much adjustment.
         new_gas = (1-zero) * actuators.gas + zero
-        new_brake = clip(actuators.brake*(1-zero), 0., zero)
+        new_brake = clip(actuators.brake*(1+zero), 0., zero)
+        aeb_brake = actuators.brake*(1+zero) - zero # For use later, braking more than regen
         #I am assuming we should not get both a gas and a brake value...
         final_pedal = new_gas - new_brake
         if not enabled:
+          # Since no input technically maps to 0.2, send 0.0 when not enabled to avoid
+          # controls mismatch.
           final_pedal = 0.0
         #TODO: Hysteresis
         #TODO: Use friction brake via AEB for harder braking
 
-        #JJS - no adjust yet - scaling needs to be -1 <-> +1
         pedal_gas = clip(final_pedal, 0., 1.)
-        if enabled:
-          print(f'actuator request: gas={actuators.gas} brake={actuators.brake}')
-          print(f'hypothetical request: gas={final_pedal}')
-          print(f'pedal output: {pedal_gas}')
+
         #This would be more appropriate
         #pedal_gas = clip(actuators.gas, 0., 1.)
         if (frame % 4) == 0:
