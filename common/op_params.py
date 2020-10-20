@@ -44,7 +44,7 @@ class opParams:
                            'indi_error_gain': {'default': 13.1, 'clip': [1.0, 25.0], 'allowed_types': [float], 'live': True},
                            'indi_rate_error_gain': {'default': 4.57, 'clip': [1.0, 20.0], 'allowed_types': [float], 'live': True},
                            'indi_time_constant': {'default': 5.5, 'clip': [0.0, 40.0], 'allowed_types': [float], 'live': True},
-                           'kp_low': {'default': 1.2, 'clip': [0.0, 5.0], 'allowed_types': [float], 'live': True},
+                           'kp_0': {'default': 1.2, 'clip': [0.0, 5.0], 'allowed_types': [float], 'live': True},
                            'kp_11': {'default': 0.8, 'clip': [0.0, 5.0], 'allowed_types': [float], 'live': True},
                            'kp_78': {'default': 0.5, 'clip': [0.0, 5.0], 'allowed_types': [float], 'live': True},
                            'ki_0': {'default': 0.18, 'clip': [0.0, 1.0], 'allowed_types': [float], 'live': True},
