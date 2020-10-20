@@ -81,12 +81,12 @@ class LongControl():
 
     # Update tunable parameters:
     self.pid._k_i = (self.pid._k_i[0],
-                     [op_params.get('ki_low'),
-                      op_params.get('ki_high')])
+                     [op_params.get('ki_0'),
+                      op_params.get('ki_78')])
     self.pid._k_p = (self.pid._k_p[0],
-                     [op_params.get('kp_low'),
-                      op_params.get('kp_mid'),
-                      op_params.get('kp_high')])
+                     [op_params.get('kp_0'),
+                      op_params.get('kp_11'),
+                      op_params.get('kp_78')])
 
     # Update state machine
     output_gb = self.last_output_gb

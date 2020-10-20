@@ -7,8 +7,6 @@ from selfdrive.car.gm import gmcan
 from selfdrive.car.gm.values import DBC, SUPERCRUISE_CARS, NO_ASCM_CARS, CanBus
 from opendbc.can.packer import CANPacker
 
-from common.op_params import opParams
-
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
 
@@ -92,7 +90,6 @@ class CarController():
 
   def update(self, enabled, CS, frame, actuators, \
              hud_v_cruise, hud_show_lanes, hud_show_car, hud_alert):
-    op_params = opParams()
     P = self.params
 
     # Send CAN commands.
@@ -154,7 +151,7 @@ class CarController():
         # Shrink gas request to 0.8, have it start at 0.2
         # Expand brake request to 1.2, first 0.2 gives regen, next 1.0 gives AEB
         #  (if implemented, may or may not need adjustment if not implemented). 
-        zero = op_params.get('zero') #0.2 works exceedingly well, may not need much adjustment.
+        zero = 0.2 #0.2 works exceedingly well, may not need much adjustment.
         new_gas = (1-zero) * actuators.gas + zero
         new_brake = clip(actuators.brake*(1+zero), 0., zero)
         aeb_brake = actuators.brake*(1+zero) - zero # For use later, braking more than regen
