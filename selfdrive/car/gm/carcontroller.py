@@ -151,7 +151,7 @@ class CarController():
         # Shrink gas request to 0.8, have it start at 0.2
         # Expand brake request to 1.2, first 0.2 gives regen, next 1.0 gives AEB
         #  (if implemented, may or may not need adjustment if not implemented)
-        # Max pedal position is 260
+        # Max pedal position is 256
         # Min pedal is 0
         # Pedal gas-point appears to be about 40 per Cabana
         # Closer to 0.15 not 0.2

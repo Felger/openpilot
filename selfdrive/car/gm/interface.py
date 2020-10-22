@@ -60,7 +60,7 @@ class CarInterface(CarInterfaceBase):
       ret.centerToFront = ret.wheelbase * 0.4 # wild guess
 
     elif candidate == CAR.BOLT:
-      ret.minEnableSpeed = 25 * CV.MPH_TO_MS
+      ret.minEnableSpeed = 24 * CV.MPH_TO_MS
       if ret.enableGasInterceptor:
         ret.minEnableSpeed = 5 * CV.MPH_TO_MS #steering works down to 5mph; pedal to 0
       ret.mass = 1616. + STD_CARGO_KG
