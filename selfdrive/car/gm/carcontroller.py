@@ -147,18 +147,22 @@ class CarController():
           can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, apply_gas, idx, enabled, at_full_stop))
       elif CS.CP.enableGasInterceptor:
         #It seems in L mode, accel / decel point is around 1/5
-        #-1-------AEB------0----regen---0.2-------accel----------+1
+        #-1-------AEB------0----regen---0.15-------accel----------+1
         # Shrink gas request to 0.8, have it start at 0.2
         # Expand brake request to 1.2, first 0.2 gives regen, next 1.0 gives AEB
-        #  (if implemented, may or may not need adjustment if not implemented). 
-        zero = 0.2 #0.2 works exceedingly well, may not need much adjustment.
+        #  (if implemented, may or may not need adjustment if not implemented)
+        # Max pedal position is 260
+        # Min pedal is 0
+        # Pedal gas-point appears to be about 40 per Cabana
+        # Closer to 0.15 not 0.2
+        zero = 0.15 
         new_gas = (1-zero) * actuators.gas + zero
-        new_brake = clip(actuators.brake*(1+zero), 0., zero)
-        aeb_brake = actuators.brake*(1+zero) - zero # For use later, braking more than regen
+        new_brake = clip(actuators.brake*(1-zero), 0., zero) # Make brake the same size as gas
+        aeb_brake = actuators.brake*(1-zero) # For use later, braking more than regen
         #I am assuming we should not get both a gas and a brake value...
         final_pedal = new_gas - new_brake
         if not enabled:
-          # Since no input technically maps to 0.2, send 0.0 when not enabled to avoid
+          # Since no input technically maps to 0.15, send 0.0 when not enabled to avoid
           # controls mismatch.
           final_pedal = 0.0
         #TODO: Hysteresis
