@@ -86,6 +86,8 @@ class LongControl():
     self.pid._k_p = (self.pid._k_p[0],
                      [op_params.get('kp_0'),
                       op_params.get('kp_11'),
+                      op_params.get('kp_22'),
+                      op_params.get('kp_45'),
                       op_params.get('kp_78')])
 
     # Update state machine
