@@ -125,9 +125,9 @@ class CarController():
       # treat pedals as one
       final_pedal = actuators.gas - actuators.brake
 
-      # *** apply pedal hysteresis ***
-      final_brake, self.brake_steady = actuator_hystereses(
-        final_pedal, self.pedal_steady)
+      # *** apply pedal hysteresis *** - Doesn't appear to do anything?
+      # final_brake, self.brake_steady = actuator_hystereses(
+      #   final_brake, self.brake_steady)
       
       if not enabled:
         # Stock ECU sends max regen when not enabled.
@@ -155,19 +155,20 @@ class CarController():
         # Min pedal is 0
         # Pedal gas-point appears to be about 40 per Cabana
         # Closer to 0.15 not 0.2
-        zero = 0.15 
-        new_gas = (1-zero) * actuators.gas + zero
-        new_brake = clip(actuators.brake*(1-zero), 0., zero) # Make brake the same size as gas
-        aeb_brake = actuators.brake*(1-zero) # For use later, braking more than regen
+        zero = 40/256
+        gas = (1-zero) * actuators.gas + zero
+        regen = clip(actuators.brake*(1-zero), 0., zero) # Make brake the same size as gas, but clip to regen
+        aeb = actuators.brake*(1-zero)-regen # For use later, braking more than regen
         #I am assuming we should not get both a gas and a brake value...
-        final_pedal = new_gas - new_brake
+        final_pedal = gas - regen
         if not enabled:
           # Since no input technically maps to 0.15, send 0.0 when not enabled to avoid
           # controls mismatch.
           final_pedal = 0.0
-        #TODO: Hysteresis
         #TODO: Use friction brake via AEB for harder braking
-
+        
+        # apply pedal hysteresis and clip the final output to valid values.
+        final_pedal, self.pedal_steady = actuator_hystereses(final_pedal, self.pedal_steady)
         pedal_gas = clip(final_pedal, 0., 1.)
 
         #This would be more appropriate
