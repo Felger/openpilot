@@ -4,7 +4,7 @@ from common.numpy_fast import interp, clip
 from selfdrive.config import Conversions as CV
 from selfdrive.car import apply_std_steer_torque_limits, create_gas_command
 from selfdrive.car.gm import gmcan
-from selfdrive.car.gm.values import DBC, SUPERCRUISE_CARS, NO_ASCM_CARS, CanBus
+from selfdrive.car.gm.values import DBC, SUPERCRUISE_CARS, NO_ASCM_CARS, REGEN_CARS, CanBus
 from opendbc.can.packer import CANPacker
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
@@ -146,17 +146,34 @@ class CarController():
           can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, CanBus.CHASSIS, apply_brake, idx, near_stop, at_full_stop))
           at_full_stop = enabled and CS.out.standstill
           can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, apply_gas, idx, enabled, at_full_stop))
-      elif CS.CP.enableGasInterceptor:
+      elif CS.CP.enableGasInterceptor and self.car_fingerprint in REGEN_CARS:
         #It seems in L mode, accel / decel point is around 1/5
-        #0----decel-------0.2-------accel----------1
-        new_gas = 0.8 * actuators.gas + 0.2
-        new_brake = 0.2 * actuators.brake
-        #I am assuming we should not get both a gas and a break value...
-        final_pedal2 = new_gas - new_brake
+        #-1-------AEB------0----regen---0.15-------accel----------+1
+        # Shrink gas request to 0.85, have it start at 0.2
+        # Shrink brake request to 0.85, first 0.15 gives regen, rest gives AEB
+        zero = 40/256
+        gas = (1-zero) * actuators.gas + zero
+        regen = clip(actuators.brake*(1-zero), 0., zero) # Make brake the same size as gas, but clip to regen
+        aeb = actuators.brake*(1-zero)-regen # For use later, braking more than regen
+        final_pedal = gas - regen
+        if not enabled:
+          # Since no input technically maps to 0.15, send 0.0 when not enabled to avoid
+          # controls mismatch.
+          final_pedal = 0.0
+        #TODO: Use friction brake via AEB for harder braking
+        
+        # apply pedal hysteresis and clip the final output to valid values.
+        final_pedal, self.pedal_steady = actuator_hystereses(final_pedal, self.pedal_steady)
+        pedal_gas = clip(final_pedal, 0., 1.)
+        #pedal_gas = clip(actuators.gas, 0., 1.)
+        if (frame % 4) == 0:
+          idx = (frame // 4) % 4
+          # send exactly zero if apply_gas is zero. Interceptor will send the max between read value and apply_gas.
+          # This prevents unexpected pedal range rescaling
+          can_sends.append(create_gas_command(self.packer_pt, pedal_gas, idx))
+      elif CS.CP.enableGasInterceptor:
         #TODO: Hysteresis
         #TODO: Use friction brake via AEB for harder braking
-
-        #JJS - no adjust yet - scaling needs to be -1 <-> +1
         pedal_gas = clip(final_pedal, 0., 1.)
         #This would be more appropriate
         #pedal_gas = clip(actuators.gas, 0., 1.)
@@ -165,7 +182,6 @@ class CarController():
           # send exactly zero if apply_gas is zero. Interceptor will send the max between read value and apply_gas.
           # This prevents unexpected pedal range rescaling
           can_sends.append(create_gas_command(self.packer_pt, pedal_gas, idx))
-
       # Send dashboard UI commands (ACC status), 25hz
       if (frame % 4) == 0:
         can_sends.append(gmcan.create_acc_dashboard_command(self.packer_pt, CanBus.POWERTRAIN, enabled, hud_v_cruise * CV.MS_TO_KPH, hud_show_car))
