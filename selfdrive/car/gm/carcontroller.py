@@ -154,7 +154,7 @@ class CarController():
         zero = 40/256
         gas = (1-zero) * actuators.gas + zero
         regen = clip(actuators.brake*(1-zero), 0., zero) # Make brake the same size as gas, but clip to regen
-        aeb = actuators.brake*(1-zero)-regen # For use later, braking more than regen
+        # aeb = actuators.brake*(1-zero)-regen # For use later, braking more than regen
         final_pedal = gas - regen
         if not enabled:
           # Since no input technically maps to 0.15, send 0.0 when not enabled to avoid
