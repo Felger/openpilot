@@ -151,13 +151,13 @@ class CarInterface(CarInterfaceBase):
     ret.longitudinalTuning.kiBP = [0., 35.]
 
     if ret.enableGasInterceptor and candidate == CAR.BOLT:
-      # TODO: Make this if statement more generic for future GM EVs
+      # TODO: Move this to before cars, and put the Bolt-specific tuning in its category.
       # Assumes the Bolt is using L-Mode for regen braking.
       ret.gasMaxBP = [0.0, 5.0, 9.0, 35.0]
       ret.gasMaxV =  [0.5, 0.7, 0.9, 0.9]
       ret.longitudinalTuning.kpBP = [0.0, 5.0, 10.0, 20.0, 35.0]
       ret.longitudinalTuning.kpV = [0.6, 0.95, 1.2, 1.3, 1.0]
-      ret.longitudinalTuning.kiV = [0.23, 0.17]
+      ret.longitudinalTuning.kiV = [0.54, 0.36]
     elif ret.enableGasInterceptor:
       # Use the defaults:
       ret.gasMaxBP = [0., 9., 35]
