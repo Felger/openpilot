@@ -153,7 +153,7 @@ class CarController():
         # Shrink brake request to 0.85, first 0.15 gives regen, rest gives AEB
         zero = 40/256
         gas = (1-zero) * actuators.gas + zero
-        regen = clip(actuators.brake*(1-zero), 0., zero) # Make brake the same size as gas, but clip to regen
+        regen = clip(actuators.brake*(1+zero), 0., zero) # Make brake the same size as gas, but clip to regen
         # aeb = actuators.brake*(1-zero)-regen # For use later, braking more than regen
         final_pedal = gas - regen
         if not enabled:
