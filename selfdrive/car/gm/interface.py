@@ -4,7 +4,8 @@ from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.drive_helpers import create_event, EventTypes as ET
 from common.op_params import opParams
 from selfdrive.car.gm.values import CAR, Ecu, ECU_FINGERPRINT, CruiseButtons, \
-                                    SUPERCRUISE_CARS, NO_ASCM_CARS, AccState, FINGERPRINTS
+                                    SUPERCRUISE_CARS, NO_ASCM_CARS, \
+                                    AccState, FINGERPRINTS
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, is_ecu_disconnected, gen_empty_fingerprint
 from selfdrive.car.interfaces import CarInterfaceBase
 from selfdrive.config import Conversions as CV
@@ -69,7 +70,6 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 16.8
       ret.steerRatioRear = 0.
       ret.centerToFront = 2.0828 #ret.wheelbase * 0.4 # wild guess
-
       tire_stiffness_factor = 1.0
 
     elif candidate == CAR.MALIBU:
@@ -151,9 +151,6 @@ class CarInterface(CarInterfaceBase):
     ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront,
                                                                          tire_stiffness_factor=tire_stiffness_factor)
 
-
-    # Try out the updated Toyota longitudinal tuning, may be better suited especially with
-    # a pedal interceptor, reduced gains at all speeds maybe helps with herky-jerks?
     ret.longitudinalTuning.kpBP = [0., 5., 35.]
     ret.longitudinalTuning.kiBP = [0., 35.]
 
@@ -170,6 +167,12 @@ class CarInterface(CarInterfaceBase):
       # ret.longitudinalTuning.kiV = [0.18, 0.12]
       ret.longitudinalTuning.kiV = [op_params.get('ki_0'),
                                     op_params.get('ki_78')]
+    elif ret.enableGasInterceptor:
+      # Use the defaults:
+      ret.gasMaxBP = [0., 9., 35]
+      ret.gasMaxV = [0.2, 0.5, 0.7]
+      ret.longitudinalTuning.kpV = [1.2, 0.8, 0.5]
+      ret.longitudinalTuning.kiV = [0.18, 0.12]
     else:
       ret.gasMaxBP = [0.]
       ret.gasMaxV = [0.5]
@@ -211,10 +214,10 @@ class CarInterface(CarInterfaceBase):
       elif but == CruiseButtons.DECEL_SET:
         be.type = ButtonType.decelCruise
       elif but == CruiseButtons.CANCEL:
-        if not self.CP.enableGasInterceptor: #need to use cancel to disable cc with Pedal
-          be.type = ButtonType.cancel
+        be.type = ButtonType.cancel
       elif but == CruiseButtons.MAIN:
-        be.type = ButtonType.altButton3
+        if not self.CP.enableGasInterceptor:
+          be.type = ButtonType.altButton3
       buttonEvents.append(be)
 
     ret.buttonEvents = buttonEvents
