@@ -1,14 +1,28 @@
 from cereal import car
 from common.realtime import DT_CTRL
-from common.numpy_fast import interp
+from common.numpy_fast import interp, clip
 from selfdrive.config import Conversions as CV
-from selfdrive.car import apply_std_steer_torque_limits
+from selfdrive.car import apply_std_steer_torque_limits, create_gas_command
 from selfdrive.car.gm import gmcan
-from selfdrive.car.gm.values import DBC, CanBus, CarControllerParams
+from selfdrive.car.gm.values import DBC, CanBus, CarControllerParams, REGEN_CARS, NO_ASCM_CARS
 from opendbc.can.packer import CANPacker
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
+def actuator_hystereses(final_pedal, pedal_steady):
+  # hyst params... TODO: move these to VehicleParams
+  pedal_hyst_gap = 0.01    # don't change pedal command for small oscillations within this value
+
+  # for small pedal oscillations within pedal_hyst_gap, don't change the pedal command
+  if final_pedal == 0.:
+    pedal_steady = 0.
+  elif final_pedal > pedal_steady + pedal_hyst_gap:
+    pedal_steady = final_pedal - pedal_hyst_gap
+  elif final_pedal < pedal_steady - pedal_hyst_gap:
+    pedal_steady = final_pedal + pedal_hyst_gap
+  final_pedal = pedal_steady
+
+  return final_pedal, pedal_steady
 
 class CarController():
   def __init__(self, dbc_name, CP, VM):
@@ -16,6 +30,7 @@ class CarController():
     self.apply_steer_last = 0
     self.lka_icon_status_last = (False, False)
     self.steer_rate_limited = False
+    self.car_fingerprint = CP.carFingerprint
 
     self.params = CarControllerParams()
 
@@ -49,24 +64,54 @@ class CarController():
     # GAS/BRAKE
     # no output if not enabled, but keep sending keepalive messages
     # treat pedals as one
-    final_pedal = actuators.gas - actuators.brake
+    if self.car_fingerprint not in NO_ASCM_CARS:
+      final_pedal = actuators.gas - actuators.brake
 
-    if not enabled:
-      # Stock ECU sends max regen when not enabled.
-      apply_gas = P.MAX_ACC_REGEN
-      apply_brake = 0
-    else:
-      apply_gas = int(round(interp(final_pedal, P.GAS_LOOKUP_BP, P.GAS_LOOKUP_V)))
-      apply_brake = int(round(interp(final_pedal, P.BRAKE_LOOKUP_BP, P.BRAKE_LOOKUP_V)))
+      if not enabled:
+        # Stock ECU sends max regen when not enabled.
+        apply_gas = P.MAX_ACC_REGEN
+        apply_brake = 0
+      else:
+        apply_gas = int(round(interp(final_pedal, P.GAS_LOOKUP_BP, P.GAS_LOOKUP_V)))
+        apply_brake = int(round(interp(final_pedal, P.BRAKE_LOOKUP_BP, P.BRAKE_LOOKUP_V)))
 
-    # Gas/regen and brakes - all at 25Hz
+      # Gas/regen and brakes - all at 25Hz
+      if (frame % 4) == 0:
+        idx = (frame // 4) % 4
+
+        at_full_stop = enabled and CS.out.standstill
+        near_stop = enabled and (CS.out.vEgo < P.NEAR_STOP_BRAKE_PHASE)
+        can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, CanBus.CHASSIS, apply_brake, idx, near_stop, at_full_stop))
+        can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, apply_gas, idx, enabled, at_full_stop))
+    elif CS.CP.enableGasInterceptor and self.car_fingerprint in REGEN_CARS:
+      #It seems in L mode, accel / decel point is around 1/5
+      #-1-------AEB------0----regen---0.15-------accel----------+1
+      # Shrink gas request to 0.85, have it start at 0.2
+      # Shrink brake request to 0.85, first 0.15 gives regen, rest gives AEB
+      zero = 40/256
+      gas = (1-zero) * actuators.gas + zero
+      regen = clip(actuators.brake, 0., zero) # Make brake the same size as gas, but clip to regen
+      # aeb = actuators.brake*(1-zero)-regen # For use later, braking more than regen
+      final_pedal = gas - regen
+      if not enabled:
+        # Since no input technically maps to 0.15, send 0.0 when not enabled to avoid
+        # controls mismatch.
+        final_pedal = 0.0
+      #TODO: Use friction brake via AEB for harder braking
+      
+      # apply pedal hysteresis and clip the final output to valid values.
+      final_pedal, self.pedal_steady = actuator_hystereses(final_pedal, self.pedal_steady)
+      pedal_gas = clip(final_pedal, 0., 1.)
+      #pedal_gas = clip(actuators.gas, 0., 1.)
+      if (frame % 4) == 0:
+        idx = (frame // 4) % 4
+        # send exactly zero if apply_gas is zero. Interceptor will send the max between read value and apply_gas.
+        # This prevents unexpected pedal range rescaling
+        can_sends.append(create_gas_command(self.packer_pt, pedal_gas, idx))
+    
+    # Send dashboard UI commands (ACC status), 25hz
     if (frame % 4) == 0:
-      idx = (frame // 4) % 4
-
-      at_full_stop = enabled and CS.out.standstill
-      near_stop = enabled and (CS.out.vEgo < P.NEAR_STOP_BRAKE_PHASE)
-      can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, CanBus.CHASSIS, apply_brake, idx, near_stop, at_full_stop))
-      can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, apply_gas, idx, enabled, at_full_stop))
+        can_sends.append(gmcan.create_acc_dashboard_command(self.packer_pt, CanBus.POWERTRAIN, enabled, hud_v_cruise * CV.MS_TO_KPH, hud_show_car))
 
     # Send dashboard UI commands (ACC status), 25hz
     if (frame % 4) == 0:
@@ -76,7 +121,7 @@ class CarController():
     # Radar needs to know current speed and yaw rate (50hz),
     # and that ADAS is alive (10hz)
     time_and_headlights_step = 10
-    tt = frame * DT_CTRL
+    # tt = frame * DT_CTRL
 
     if frame % time_and_headlights_step == 0:
       idx = (frame // time_and_headlights_step) % 4
