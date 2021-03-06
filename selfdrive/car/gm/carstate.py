@@ -5,7 +5,8 @@ from opendbc.can.can_define import CANDefine
 from opendbc.can.parser import CANParser
 from selfdrive.car.interfaces import CarStateBase
 from selfdrive.car.gm.values import DBC, CAR, AccState, CanBus, \
-                                    CruiseButtons, STEER_THRESHOLD
+                                    CruiseButtons, STEER_THRESHOLD, \
+                                    REGEN_CARS
 
 
 class CarState(CarStateBase):
@@ -67,8 +68,9 @@ class CarState(CarStateBase):
 
     ret.brakePressed = ret.brake > 1e-5
     # Regen braking is braking
-    if self.car_fingerprint == CAR.VOLT:
-      ret.brakePressed = ret.brakePressed or bool(pt_cp.vl["EBCMRegenPaddle"]['RegenPaddle'])
+    self.regen_pressed = False
+    if self.car_fingerprint in REGEN_CARS:
+      self.regen_pressed = bool(pt_cp.vl["EBCMRegenPaddle"]['RegenPaddle'])
 
     ret.cruiseState.enabled = self.pcm_acc_status != AccState.OFF
     ret.cruiseState.standstill = self.pcm_acc_status == AccState.STANDSTILL
