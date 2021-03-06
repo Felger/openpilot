@@ -165,7 +165,8 @@ class CarInterface(CarInterfaceBase):
       elif but == CruiseButtons.CANCEL:
         be.type = ButtonType.cancel
       elif but == CruiseButtons.MAIN:
-        be.type = ButtonType.altButton3
+        if not self.CP.enableGasInterceptor:
+          be.type = ButtonType.altButton3
       buttonEvents.append(be)
 
     ret.buttonEvents = buttonEvents
