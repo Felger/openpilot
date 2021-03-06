@@ -220,7 +220,9 @@ function launch {
 
   # start manager
   cd selfdrive/manager
-  ./build.py && ./manager.py
+  DRIVELOG_DATE=$(date +"%F--%H-%M-%S")
+  ./build.py && ./manager.py >> /data/drivelog-$DRIVELOG_DATE.txt
+  
 
   # if broken, keep on screen error
   while true; do sleep 1; done
